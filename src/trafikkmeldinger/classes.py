@@ -38,23 +38,23 @@ class Conversation:
         self.status = Status.NEW
         self.location = ""
         self.messages: List[Message] = []
-        self.update_status(tweet)
-        self.update_location_and_messages()
+        self.update()
 
     def add_tweet(self, tweet: Tweet) -> None:
         self.updated_at = tweet.created_at
         self.tweets.append(tweet)
-        self.update_status(tweet)
+        self.update()
+
+    def update(self) -> None:
+        self.update_status()
         self.update_location_and_messages()
 
-    def update_status(self, tweet: Tweet) -> None:
-        if any(word in tweet.text.lower() for word in ("på stedet", "berging")):
-            self.status = Status.FIXING
-        if any(word in tweet.text.lower() for word in ("åpen", "åpnet", "fjernet")):
-            self.status = Status.DONE
-
-        # Update location and messages
-        self.update_location_and_messages()
+    def update_status(self) -> None:
+        for tweet in self.tweets:
+            if any(word in tweet.text.lower() for word in ("på stedet", "berging")):
+                self.status = Status.FIXING
+            if any(word in tweet.text.lower() for word in ("åpen", "åpnet", "fjernet")):
+                self.status = Status.DONE
 
     def update_location_and_messages(self) -> None:
         """Exctract location string from messages and remove it from all messages."""
