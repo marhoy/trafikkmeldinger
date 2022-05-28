@@ -42,10 +42,7 @@ class TwitterSession(requests.Session):
     def __init__(self, config_file: str = None) -> None:
         """Initialize class object."""
         super().__init__()
-        if config_file is not None:
-            config = ApiConfig(_env_file=config_file)  # type: ignore
-        else:
-            config = ApiConfig()
+        config = ApiConfig()
         self.auth = TwitterAuth(config=config)
         self.base_url = config.BASE_URL
 
