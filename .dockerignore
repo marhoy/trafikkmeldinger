@@ -1,0 +1,11 @@
+# Exclude all files
+*
+
+# Include only these
+!pyproject.toml
+!poetry.lock
+!src/
+!Dockerfile.*
+
+# If any of the above directories contains __pycache__
+**/__pycache__/
