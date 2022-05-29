@@ -55,7 +55,7 @@ class Conversation:
                 self.status = Status.FIXING
             if any(
                 word in tweet.text.lower()
-                for word in ("åpen", "åpnet", "fjernet", "ryddet")
+                for word in ("åpen", "åpnet", "fjernet", "ryddet", "sjekket")
             ):
                 self.status = Status.DONE
 
@@ -73,7 +73,7 @@ class Conversation:
             # If there are multiple tweets, assume the common prefix is the location.
             prefix = commonprefix([tweet.text for tweet in self.tweets])
 
-        self.location = prefix.rstrip(" ,:;.").replace("#", "") + ":"
+        self.location = prefix.rstrip(" ,:;.").replace("#", "")
         self.messages = [
             Message(
                 text=upperfirst(tweet.text.removeprefix(prefix).lstrip(" ,:;.")),

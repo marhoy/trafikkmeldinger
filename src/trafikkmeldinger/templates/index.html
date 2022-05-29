@@ -64,16 +64,15 @@
     <div class="container-fluid">
       <div class="page-header">
         <h2 class="mb-0">Trafikkmeldinger</h2>
-        <h4 class="text-muted">
-          Oppdatert {{ update_timestamp | timestamp_to_str }}
-        </h4>
+        <h5 class="text-muted">
+          Oppdatert {{ updated_timestamp | timestamp_to_str }} (siste melding {{
+          last_tweet_timestamp | timestamp_to_str}})
+        </h5>
       </div>
 
       <!---->
       {% for event in conversations %}
-      <div
-        class="card mb-1 col-md-8 col-lg-6 {{ event.status | status_to_class }}"
-      >
+      <div class="card mb-1 col-lg-8 {{ event.status | status_to_class }}">
         <div class="card-body">
           <h5 class="card-title">{{ event.location }}</h5>
           {% for message in event.messages %}
