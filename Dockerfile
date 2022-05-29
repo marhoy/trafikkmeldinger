@@ -30,4 +30,4 @@ COPY src ./src
 RUN poetry install --no-dev
 
 # Run this command
-CMD ["uvicorn",  "trafikkmeldinger.app:app", "--host", "0.0.0.0", "--port", "80"]
+CMD ["uvicorn",  "trafikkmeldinger.api:app", "--host", "0.0.0.0", "--port", "80"]
