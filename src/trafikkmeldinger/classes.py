@@ -72,6 +72,9 @@ class Conversation:
         else:
             # If there are multiple tweets, assume the common prefix is the location.
             prefix = commonprefix([tweet.text for tweet in self.tweets])
+            if match := re.match(r"(.+[.,:;])", prefix):
+                # Include up to the last ,.:;
+                prefix = match.group(1)
 
         self.location = prefix.rstrip(" ,:;.").replace("#", "")
         self.messages = [
