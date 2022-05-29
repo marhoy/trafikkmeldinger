@@ -33,12 +33,12 @@ def get_tweets(username: str, past_hours: int) -> List[Tweet]:
         "exclude": "retweets",
     }
     r = session.get(f"users/{user_id}/tweets", params=params)
-    if r.from_cache:
-        logger.debug("Twitter API: Using cache")
-    else:
-        logger.debug("Twitter API: Got new data")
-
     tweets = parse_obj_as(List[Tweet], r.json()["data"])
+    if r.from_cache:
+        logger.debug(f"Twitter API: Using cached response ({len(tweets)} tweets).")
+    else:
+        logger.debug(f"Twitter API: Got new data ({len(tweets)} tweets).")
+
     return tweets
 
 
