@@ -10,24 +10,33 @@ RUN apt-get update \
     apt-utils \
     curl
 
-# Upgrade system-wide pip/setuptools
-RUN pip install --upgrade pip setuptools
+# We want to run things as a non-privileged user
+ENV USERNAME=api
+ENV PATH="$PATH:/home/$USERNAME/.local/bin"
+
+# Add user and set up a workdir
+RUN useradd -m $USERNAME
+WORKDIR /home/$USERNAME/app
+RUN chown $USERNAME.$USERNAME .
+
+# Everything below here runs as a non-privileged user
+USER $USERNAME
 
 # Install poetry
-ENV PATH="$PATH:/root/.local/bin"
 RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python - --version 1.1.13
-RUN poetry config virtualenvs.create false
+# RUN poetry config virtualenvs.create false
 
 # Install runtime dependencies (will be cached)
-WORKDIR /app
-COPY pyproject.toml poetry.lock ./
+COPY --chown=$USERNAME:$USERNAME pyproject.toml poetry.lock ./
 RUN poetry install --no-dev --no-root
 
 # Copy project files to container
-COPY src ./src
+COPY --chown=$USERNAME:$USERNAME src ./src
 
 # Install our own package
 RUN poetry install --no-dev
 
 # Run this command
-CMD ["uvicorn",  "trafikkmeldinger.api:app", "--host", "0.0.0.0", "--port", "80"]
+EXPOSE 5000
+ENTRYPOINT ["poetry", "run"]
+CMD ["uvicorn",  "trafikkmeldinger.api:app", "--host", "0.0.0.0", "--port", "5000"]
