@@ -5,5 +5,5 @@ __pycache__/
 .DS_Store
 
 .coverage
-logfile-*
+logs/
 *.sqlite
