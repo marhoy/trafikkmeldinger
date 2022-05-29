@@ -8,8 +8,9 @@ def timestamp_to_str(
     timestamp: datetime.datetime, local_tz: str = "Europe/Oslo"
 ) -> str:
     """Format a timestamp."""
+    timestamp = timestamp.astimezone(zoneinfo.ZoneInfo(local_tz))
     date_diff = (
-        timestamp.date() - datetime.datetime.now(tz=datetime.timezone.utc).date()
+        timestamp.date() - datetime.datetime.now(tz=zoneinfo.ZoneInfo(local_tz)).date()
     )
     match date_diff.days:
         case 0:
@@ -19,7 +20,6 @@ def timestamp_to_str(
         case _:
             days_ago = f"{-date_diff.days} dager siden "
 
-    timestamp = timestamp.astimezone(zoneinfo.ZoneInfo(local_tz))
     return f"{days_ago}{timestamp:%H:%M}"
 
 

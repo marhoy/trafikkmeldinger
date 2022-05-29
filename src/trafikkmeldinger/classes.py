@@ -53,15 +53,19 @@ class Conversation:
         for tweet in self.tweets:
             if any(word in tweet.text.lower() for word in ("på stedet", "berging")):
                 self.status = Status.FIXING
-            if any(word in tweet.text.lower() for word in ("åpen", "åpnet", "fjernet")):
+            if any(
+                word in tweet.text.lower()
+                for word in ("åpen", "åpnet", "fjernet", "ryddet")
+            ):
                 self.status = Status.DONE
 
     def update_location_and_messages(self) -> None:
         """Exctract location string from messages and remove it from all messages."""
         if len(self.tweets) == 1:
             # If there is only one tweet, assume location is the first substring that
-            # ends with either of .:;
-            if match := re.match(r"^([^.:;]+)[.:;]", self.tweets[0].text):
+            # ends with either of .:; (and then something else than a number, to avoid
+            # splitting on 'Rv. 3')
+            if match := re.match(r"^(.+?)[.:;]\s+\D", self.tweets[0].text):
                 prefix = match.group(1)
             else:
                 prefix = ""
