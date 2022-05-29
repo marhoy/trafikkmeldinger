@@ -17,7 +17,9 @@ log_filter: loguru.FilterDict = {
 }
 logger.remove()
 logger.add(sys.stderr, filter=log_filter)
-logger.add("logfile-{time}.log", filter=log_filter)
+logger.add(
+    "logs/trafikkmeldinger.log", filter=log_filter, rotation="1 day", retention="1 week"
+)
 
 
 ##
