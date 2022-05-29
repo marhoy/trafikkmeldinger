@@ -2,6 +2,7 @@
 import os
 
 import requests
+import requests_cache
 from pydantic import BaseSettings, Field, HttpUrl, SecretStr
 
 
@@ -36,12 +37,12 @@ class TwitterAuth(requests.auth.AuthBase):
         return request
 
 
-class TwitterSession(requests.Session):
+class TwitterSession(requests_cache.CachedSession):
     """A requests session towards the Twitter API."""
 
-    def __init__(self, config_file: str = None) -> None:
+    def __init__(self, *args, **kwargs) -> None:  # type: ignore
         """Initialize class object."""
-        super().__init__()
+        super().__init__(*args, **kwargs)
         config = ApiConfig()
         self.auth = TwitterAuth(config=config)
         self.base_url = config.BASE_URL

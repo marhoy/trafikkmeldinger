@@ -1,12 +1,17 @@
 import datetime
 from typing import Dict, List, Union
 
+from loguru import logger
 from pydantic import parse_obj_as
 
 from trafikkmeldinger.classes import Conversation, Tweet
 from trafikkmeldinger.twitter_api import TwitterSession
 
-session = TwitterSession()
+session = TwitterSession(
+    "twitter_cache",
+    expire_after=datetime.timedelta(minutes=1),
+    ignored_parameters=["start_time"],
+)
 
 
 def get_user_id(username: str) -> int:
@@ -28,6 +33,11 @@ def get_tweets(username: str, past_hours: int) -> List[Tweet]:
         "exclude": "retweets",
     }
     r = session.get(f"users/{user_id}/tweets", params=params)
+    if r.from_cache:
+        logger.debug("Twitter API: Using cache")
+    else:
+        logger.debug("Twitter API: Got new data")
+
     tweets = parse_obj_as(List[Tweet], r.json()["data"])
     return tweets
 
