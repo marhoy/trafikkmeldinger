@@ -39,4 +39,4 @@ RUN poetry install --no-dev
 # Run this command
 EXPOSE 5000
 ENTRYPOINT ["poetry", "run"]
-CMD ["uvicorn",  "trafikkmeldinger.api:app", "--host", "0.0.0.0", "--port", "5000"]
+CMD ["uvicorn",  "trafikkmeldinger.api:app", "--host", "0.0.0.0", "--port", "5000", "--forwarded-allow-ips", "*"]
