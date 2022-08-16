@@ -23,7 +23,7 @@ RUN chown $USERNAME.$USERNAME .
 USER $USERNAME
 
 # Install poetry
-RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python - --version 1.1.13
+RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python - --version 1.1.14
 # RUN poetry config virtualenvs.create false
 
 # Install runtime dependencies (will be cached)
