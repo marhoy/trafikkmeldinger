@@ -55,7 +55,7 @@ class Conversation:
                 self.status = Status.FIXING
             if any(
                 word in tweet.text.lower()
-                for word in ("åpen", "åpnet", "fjernet", "ryddet", "sjekket")
+                for word in ("åpen", "åpnet", "åpne", "fjernet", "ryddet", "sjekket")
             ):
                 self.status = Status.DONE
 
