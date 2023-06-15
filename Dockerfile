@@ -1,4 +1,4 @@
-FROM python:3.10-slim-bullseye
+FROM python:3.11-slim-bullseye
 
 # Define some environment variables
 ENV PIP_NO_CACHE_DIR=true \
@@ -23,7 +23,7 @@ RUN chown $USERNAME.$USERNAME .
 USER $USERNAME
 
 # Install poetry
-RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python - --version 1.1.14
+RUN curl -sSL https://install.python-poetry.org | python - --version 1.5.1
 # RUN poetry config virtualenvs.create false
 
 # Install runtime dependencies (will be cached)
