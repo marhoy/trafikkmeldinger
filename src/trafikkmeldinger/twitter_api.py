@@ -1,9 +1,10 @@
 """Twitter API Client."""
 import os
+from typing import cast
 
 import requests
 import requests_cache
-from pydantic import BaseSettings, Field, HttpUrl, SecretStr
+from pydantic import BaseSettings, HttpUrl, SecretStr
 
 
 class ApiConfig(BaseSettings):
@@ -11,7 +12,7 @@ class ApiConfig(BaseSettings):
 
     BEARER_TOKEN: SecretStr
     USER_AGENT: str = "Python"
-    BASE_URL: HttpUrl = Field("https://api.twitter.com/2/")
+    BASE_URL: HttpUrl = cast(HttpUrl, "https://api.twitter.com/2/")
 
     class Config:
         """Get parameter values from file."""
