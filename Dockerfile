@@ -28,13 +28,13 @@ RUN curl -sSL https://install.python-poetry.org | python - --version 1.5.1
 
 # Install runtime dependencies (will be cached)
 COPY --chown=$USERNAME:$USERNAME pyproject.toml poetry.lock ./
-RUN poetry install --no-dev --no-root
+RUN poetry install --only main --no-root
 
 # Copy project files to container
 COPY --chown=$USERNAME:$USERNAME src ./src
 
 # Install our own package
-RUN poetry install --no-dev
+RUN poetry install --only main
 
 # Run this command
 EXPOSE 5000
