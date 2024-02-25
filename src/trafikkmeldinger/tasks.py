@@ -13,7 +13,7 @@ create_db_and_tables()
 def update_db_with_data() -> list[str]:
     current_situation_ids: list[str] = []
 
-    with Session(engine, autoflush=False) as session:
+    with Session(engine) as session:
         num_updated, num_added = 0, 0
         for situation in get_situations_with_records():
             # Add this situation to the list of current situations
@@ -41,13 +41,13 @@ def update_db_with_data() -> list[str]:
                 # Add the updated situation to the session
                 num_updated += 1
                 session.add(db_situation)
+                session.commit()
             else:
                 # Situation does not exist in database
                 num_added += 1
                 session.add(situation)
+                session.commit()
 
-        # Commit all changes
-        session.commit()
         logger.info(
             f"Updated {num_updated} situations and added {num_added} new situations."
         )
