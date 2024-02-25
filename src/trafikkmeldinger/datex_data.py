@@ -1,91 +1,92 @@
-import datetime
+import xml.etree.ElementTree as ET
+from datetime import datetime
+from typing import Generator
 
-from lxml import etree
-from pydantic import BaseModel
-
-from trafikkmeldinger.datex_api import get_situation_data, namespaces
-
-
-class Situation(BaseModel):
-    """Situation model."""
-
-    type: str
-    id: str
-    updated_time: datetime.datetime
-    record_id: str
-    record_version: str
-    record_version_time: datetime.datetime
-    valid_from: datetime.datetime
-    valid_to: datetime.datetime
-    area: str
-    location: str
-    comment: str
+from trafikkmeldinger.datex_api import get_situation_xml, namespaces
+from trafikkmeldinger.sqlmodels import Record, Situation
 
 
-def get_situations(type: str | None = None) -> list[Situation]:
-    """Get situation."""
-    xml = get_situation_data(type)
-    parser = etree.XMLParser(recover=True)
-    root = etree.fromstring(xml, parser=parser)
+def get_situations_with_records() -> Generator[Situation, None, None]:
+    root = ET.fromstring(get_situation_xml())
+    for situation in root.iterfind(".//ns12:situation", namespaces=namespaces):
 
-    situations = []
-    for situation in root.xpath("//ns12:situation", namespaces=namespaces):
-        # Situation
-        situation_id = situation.xpath("@id", namespaces=namespaces)[0]
-        updated_time = situation.xpath(
-            "./ns12:situationVersionTime", namespaces=namespaces
-        )[0].text
-
-        # Record
-        extracted_type = ""
-        if type:
-            record = situation.xpath(
-                f"./ns12:situationRecord[@xsi:type='ns12:{type}']",
+        # Get situation data
+        situation_id = situation.get("id")
+        situation_version_time = datetime.fromisoformat(
+            situation.findtext(
+                "./ns12:situationVersionTime",
+                default="",
                 namespaces=namespaces,
-            )[0]
-        else:
-            record = situation.xpath(
-                "./ns12:situationRecord",
-                namespaces=namespaces,
-            )[0]
-            extracted_type = record.xpath("@xsi:type", namespaces=namespaces)[0].split(
-                ":"
-            )[1]
-
-        record_id = record.xpath("@id", namespaces=namespaces)[0]
-
-        record_version = record.xpath("@version", namespaces=namespaces)[0]
-        record_version_time = record.xpath(
-            "./ns12:situationRecordVersionTime", namespaces=namespaces
-        )[0].text
-        valid_from = record.xpath(".//ns1:overallStartTime", namespaces=namespaces)[
-            0
-        ].text
-        valid_to = record.xpath(".//ns1:overallEndTime", namespaces=namespaces)[0].text
-        comment = record.xpath(
-            ".//ns12:generalPublicComment//ns1:value[@lang='no']", namespaces=namespaces
-        )[0].text
-        location = record.xpath(
-            ".//ns8:locationDescription//ns1:value[@lang='no']", namespaces=namespaces
-        )[0].text
-        area = record.xpath(
-            ".//ns8:namedArea//ns1:value[@lang='no']", namespaces=namespaces
-        )[0].text
-
-        situations.append(
-            Situation(
-                type=type or extracted_type,
-                id=situation_id,
-                updated_time=updated_time,
-                record_id=record_id,
-                record_version=record_version,
-                record_version_time=record_version_time,
-                valid_from=valid_from,
-                valid_to=valid_to,
-                area=area,
-                location=location,
-                comment=comment,
             )
         )
 
-    return situations
+        # Create situation object
+        situation_obj = Situation(id=situation_id, version_time=situation_version_time)
+
+        # Loop over records in the situation
+        for record in situation.findall(
+            "./ns12:situationRecord", namespaces=namespaces
+        ):
+            # Get record data
+            record_id = record.get("id", default="")
+            record_version = int(
+                record.get(
+                    "version",
+                    default=0,
+                )
+            )
+            record_type = record.get(f"{{{namespaces['xsi']}}}type", default="").split(
+                ":"
+            )[-1]
+            record_versiontime = datetime.fromisoformat(
+                record.findtext(
+                    "./ns12:situationRecordVersionTime",
+                    default="",
+                    namespaces=namespaces,
+                )
+            )
+            record_valid_from = datetime.fromisoformat(
+                record.findtext(
+                    ".//overallStartTime",
+                    default="",
+                    namespaces=namespaces,
+                )
+            )
+            record_valid_to = datetime.fromisoformat(
+                record.findtext(
+                    ".//overallEndTime",
+                    default="",
+                    namespaces=namespaces,
+                )
+            )
+            record_area = record.findtext(
+                ".//ns6:areaName//value[@lang='no']",
+                default="",
+                namespaces=namespaces,
+            )
+            record_location = record.findtext(
+                ".//ns6:locationDescription//value[@lang='no']",
+                default="",
+                namespaces=namespaces,
+            )
+            record_comment = record.findtext(
+                ".//ns12:generalPublicComment//value[@lang='no']",
+                default="",
+                namespaces=namespaces,
+            )
+
+            # Create record object
+            record_obj = Record(
+                id=record_id,
+                version=record_version,
+                type=record_type,
+                version_time=record_versiontime,
+                valid_from=record_valid_from,
+                valid_to=record_valid_to,
+                area=record_area,
+                location=record_location,
+                comment=record_comment,
+            )
+            # Append record to current situation
+            situation_obj.records.append(record_obj)
+        yield situation_obj

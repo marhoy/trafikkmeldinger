@@ -8,6 +8,10 @@ from typing import Union
 import loguru
 from loguru import logger
 
+from trafikkmeldinger.constants import settings as config
+
+__all__ = ["config"]
+
 # Configure package-wide Loguru logging. You can specify different levels for each
 # package.
 log_filter: loguru.FilterDict = {
