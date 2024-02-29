@@ -1,5 +1,5 @@
 import xml.etree.ElementTree as ET
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from typing import Generator
 
 from loguru import logger
@@ -65,13 +65,15 @@ def get_situations_with_records() -> Generator[Situation, None, None]:
                     namespaces=namespaces,
                 )
             )
-            record_valid_to = datetime.fromisoformat(
-                record.findtext(
-                    ".//overallEndTime",
-                    default="",
-                    namespaces=namespaces,
-                )
-            )
+            # If overallEndTime is missing, the record is valid until further notice.
+            if record_valid_to_string := record.findtext(
+                ".//overallEndTime",
+                default="",
+                namespaces=namespaces,
+            ):
+                record_valid_to = datetime.fromisoformat(record_valid_to_string)
+            else:
+                record_valid_to = datetime.now(UTC) + timedelta(days=365)
             record_area = record.findtext(
                 ".//ns6:areaName//value[@lang='no']",
                 default="",
