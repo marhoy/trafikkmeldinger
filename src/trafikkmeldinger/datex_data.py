@@ -2,16 +2,25 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 from typing import Generator
 
+from loguru import logger
+from requests.exceptions import ConnectionError
+
 from trafikkmeldinger.datex_api import get_situation_xml, namespaces
-from trafikkmeldinger.sqlmodels import Record, Situation
+from trafikkmeldinger.sqlmodels import Record, RecordBase, Situation, SituationBase
 
 
 def get_situations_with_records() -> Generator[Situation, None, None]:
-    root = ET.fromstring(get_situation_xml())
+    try:
+        root = ET.fromstring(get_situation_xml())
+    except (ConnectionError, ET.ParseError) as error:
+        # If we can't connect to the server, or can't parse the data.
+        logger.warning(f"Could not connect to the server or parse the data: {error}.")
+        return
+
     for situation in root.iterfind(".//ns12:situation", namespaces=namespaces):
 
         # Get situation data
-        situation_id = situation.get("id")
+        situation_id = situation.get("id", default="")
         situation_version_time = datetime.fromisoformat(
             situation.findtext(
                 "./ns12:situationVersionTime",
@@ -20,8 +29,12 @@ def get_situations_with_records() -> Generator[Situation, None, None]:
             )
         )
 
-        # Create situation object
-        situation_obj = Situation(id=situation_id, version_time=situation_version_time)
+        # Create situation data object. This will cause Pydantic to validate the data.
+        situation_data = SituationBase(
+            id=situation_id, version_time=situation_version_time
+        )
+        # Create situation db object, which doesn't trigger validation.
+        situation_db = Situation.model_validate(situation_data)
 
         # Loop over records in the situation
         for record in situation.findall(
@@ -75,8 +88,8 @@ def get_situations_with_records() -> Generator[Situation, None, None]:
                 namespaces=namespaces,
             )
 
-            # Create record object
-            record_obj = Record(
+            # Create record data object. This will cause Pydantic to validate the data.
+            record_data = RecordBase(
                 id=record_id,
                 version=record_version,
                 type=record_type,
@@ -87,6 +100,12 @@ def get_situations_with_records() -> Generator[Situation, None, None]:
                 location=record_location,
                 comment=record_comment,
             )
+            # Create record db object, which doesn't trigger validation.
+            record_db = Record.model_validate(record_data)
+
             # Append record to current situation
-            situation_obj.records.append(record_obj)
-        yield situation_obj
+            situation_db.records.append(record_db)
+
+        # This feels broken, but when a model is defined with table=True, it is not
+        # validated on creation. We need to manually validate the model.
+        yield situation_db
