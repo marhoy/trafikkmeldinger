@@ -28,6 +28,9 @@ def update_db_with_data() -> set[str]:
                     num_updated_time += 1
                     db_situation.version_time = situation.version_time
 
+                # Make sure the situation is marked as active
+                db_situation.is_active = True
+
                 # Find existing records for this situation
                 db_record_versions = [
                     (record.id, record.version) for record in db_situation.records
@@ -83,13 +86,15 @@ def delete_old_situations() -> None:
         # Find all situations that are not active
         old_situations = session.exec(
             select(Situation)
-            .where(not Situation.is_active)
+            .where(Situation.is_active == False)  # noqa: E712
             .where(Situation.version_time < datetime.now() - timedelta(days=7))
         ).all()
 
         # Delete all old situations
         logger.debug(f"Deleting {len(old_situations)} expired situations.")
         for situation in old_situations:
+            for record in situation.records:
+                session.delete(record)
             session.delete(situation)
 
         # Commit all changes
