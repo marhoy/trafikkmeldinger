@@ -1,19 +1,24 @@
+"""Define classes for trafikkmeldinger package."""
+
 import datetime
 import re
 from enum import IntEnum
 from os.path import commonprefix
-from typing import List
 
 from pydantic import BaseModel
 
 
 class Status(IntEnum):
+    """Status of a conversation."""
+
     NEW = 1
     FIXING = 2
     DONE = 3
 
 
 class Tweet(BaseModel):
+    """A tweet from Twitter / X."""
+
     id: int
     conversation_id: int
     created_at: datetime.datetime
@@ -21,6 +26,8 @@ class Tweet(BaseModel):
 
 
 class Message(BaseModel):
+    """A message in a conversation."""
+
     created_at: datetime.datetime
     text: str
 
@@ -31,25 +38,31 @@ def upperfirst(string: str) -> str:
 
 
 class Conversation:
+    """A conversation consisting of multiple messages."""
+
     def __init__(self, tweet: Tweet) -> None:
+        """Initialize a conversation with a tweet."""
         self.created_at = tweet.created_at
         self.updated_at = tweet.created_at
-        self.tweets: List[Tweet] = [tweet]
+        self.tweets: list[Tweet] = [tweet]
         self.status = Status.NEW
         self.location = ""
-        self.messages: List[Message] = []
+        self.messages: list[Message] = []
         self.update()
 
     def add_tweet(self, tweet: Tweet) -> None:
+        """Add a tweet to the conversation."""
         self.updated_at = tweet.created_at
         self.tweets.append(tweet)
         self.update()
 
     def update(self) -> None:
+        """Update status, location and messages."""
         self.update_status()
         self.update_location_and_messages()
 
     def update_status(self) -> None:
+        """Update conversation status based on tweets."""
         for tweet in self.tweets:
             if any(word in tweet.text.lower() for word in ("på stedet", "berging")):
                 self.status = Status.FIXING

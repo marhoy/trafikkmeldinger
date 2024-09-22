@@ -1,8 +1,12 @@
+"""Get data from Twitter API."""
+
+from __future__ import annotations
+
 import datetime
-from typing import Dict, List, Union
+from typing import List
 
 from loguru import logger
-from pydantic import parse_obj_as
+from pydantic import TypeAdapter
 
 from trafikkmeldinger.classes import Conversation, Tweet
 from trafikkmeldinger.twitter_api import TwitterSession
@@ -15,17 +19,19 @@ session = TwitterSession(
 
 
 def get_user_id(username: str) -> int:
+    """Get user ID from username."""
     r = session.get(f"users/by/username/{username}")
     return int(r.json()["data"]["id"])
 
 
-def get_tweets(username: str, past_hours: int) -> List[Tweet]:
+def get_tweets(username: str, past_hours: int) -> list[Tweet]:
+    """Get tweets from a user."""
     user_id = get_user_id(username)
 
     start_time = datetime.datetime.now(tz=datetime.timezone.utc).replace(
         microsecond=0
     ) - datetime.timedelta(hours=past_hours)
-    params: Dict[str, Union[int, str]] = {
+    params: dict[str, int | str] = {
         "max_results": 100,
         "start_time": start_time.isoformat(),
         # "end_time": (start_time + datetime.timedelta(hours=6)).isoformat(),
@@ -33,7 +39,8 @@ def get_tweets(username: str, past_hours: int) -> List[Tweet]:
         "exclude": "retweets",
     }
     r = session.get(f"users/{user_id}/tweets", params=params)
-    tweets = parse_obj_as(List[Tweet], r.json()["data"])
+    list_tweet_adapter = TypeAdapter(List[Tweet])
+    tweets = list_tweet_adapter.validate_python(r.json()["data"])
     if r.from_cache:
         logger.debug(f"Twitter API: Using cached response ({len(tweets)} tweets).")
     else:
@@ -42,10 +49,10 @@ def get_tweets(username: str, past_hours: int) -> List[Tweet]:
     return tweets
 
 
-def get_tweet_conversations(username: str, past_hours: int) -> List[Conversation]:
+def get_tweet_conversations(username: str, past_hours: int) -> list[Conversation]:
     """Get list of conversations, most recent first."""
     tweets = get_tweets(username, past_hours)
-    conversations: Dict[int, Conversation] = dict()
+    conversations: dict[int, Conversation] = {}
     for tweet in reversed(tweets):
         if not conversations.get(tweet.conversation_id):
             conversations[tweet.conversation_id] = Conversation(tweet)
