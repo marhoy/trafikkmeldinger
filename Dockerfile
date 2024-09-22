@@ -1,4 +1,4 @@
-FROM python:3.11-slim-bullseye
+FROM python:3.12-slim-bookworm
 
 # Define some environment variables
 ENV PIP_NO_CACHE_DIR=true \
@@ -10,6 +10,9 @@ RUN apt-get update \
     apt-utils \
     curl
 
+# Upgrade system-wide pip
+RUN pip install --root-user-action=ignore --upgrade pip
+
 # We want to run things as a non-privileged user
 ENV USERNAME=api
 ENV PATH="$PATH:/home/$USERNAME/.local/bin"
@@ -17,13 +20,13 @@ ENV PATH="$PATH:/home/$USERNAME/.local/bin"
 # Add user and set up a workdir
 RUN useradd -m $USERNAME
 WORKDIR /home/$USERNAME/app
-RUN chown $USERNAME.$USERNAME .
+RUN chown $USERNAME:$USERNAME .
 
 # Everything below here runs as a non-privileged user
 USER $USERNAME
 
 # Install poetry
-RUN curl -sSL https://install.python-poetry.org | python - --version 1.5.1
+RUN curl -sSL https://install.python-poetry.org | python - --version 1.8.3
 # RUN poetry config virtualenvs.create false
 
 # Install runtime dependencies (will be cached)
