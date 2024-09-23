@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from zoneinfo import ZoneInfo
 
 from trafikkmeldinger import jinja_filters
+from trafikkmeldinger.politi_loggen import PoliceLog
 from trafikkmeldinger.twitter_data import get_tweet_conversations
 
 app = FastAPI()
@@ -42,14 +43,16 @@ async def main(
     past_hours: int = Query(default=24, ge=1, le=48),
 ) -> Response:
     """Generate html page with messages."""
-    conversations = get_tweet_conversations(username, past_hours)
-    last_tweet_timestamp = max(conv.updated_at for conv in conversations)
+    twitter_threads = get_tweet_conversations(username, past_hours)
+    police_threads = PoliceLog().get_threads()
+    threads = sorted(twitter_threads + police_threads, reverse=True)
+    last_message_timestamp = max(thread.updated_at for thread in threads)
     return templates.TemplateResponse(
         "index.html",
         {
             "request": request,
             "updated_timestamp": datetime.datetime.now(tz=ZoneInfo("Europe/Oslo")),
-            "last_tweet_timestamp": last_tweet_timestamp,
-            "conversations": conversations,
+            "last_message_timestamp": last_message_timestamp,
+            "threads": threads,
         },
     )
