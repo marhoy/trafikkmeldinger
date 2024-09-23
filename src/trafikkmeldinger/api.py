@@ -46,13 +46,13 @@ async def main(
     twitter_threads = get_tweet_conversations(username, past_hours)
     police_threads = PoliceLog().get_threads()
     threads = sorted(twitter_threads + police_threads, reverse=True)
-    last_timestamp = max(thread.updated_at for thread in threads)
+    last_message_timestamp = max(thread.updated_at for thread in threads)
     return templates.TemplateResponse(
         "index.html",
         {
             "request": request,
             "updated_timestamp": datetime.datetime.now(tz=ZoneInfo("Europe/Oslo")),
-            "last_tweet_timestamp": last_timestamp,
-            "conversations": threads,
+            "last_message_timestamp": last_message_timestamp,
+            "threads": threads,
         },
     )
