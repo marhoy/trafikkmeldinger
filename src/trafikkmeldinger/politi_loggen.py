@@ -5,6 +5,7 @@ from __future__ import annotations
 import datetime
 
 import requests_cache
+from loguru import logger
 from pydantic import Field
 
 from trafikkmeldinger.classes import Message, Status, Thread
@@ -92,6 +93,12 @@ class PoliceLog:
         with self.session as session:
             r = session.get(f"{self.base_url}/messages", params=params, timeout=10)
         r.raise_for_status()
+
+        if r.from_cache:
+            logger.debug("Got police log from cache.")
+        else:
+            logger.debug("Got police log from API.")
+
         threads: dict[str, PoliceThread] = {}
         for item in r.json().get("data", []):
             message = PoliceMessage(**item)
