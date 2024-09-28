@@ -1,9 +1,10 @@
+"""Module initialization."""
+
 from __future__ import annotations
 
 import logging
 import sys
 import types
-from typing import Union
 
 import loguru
 from loguru import logger
@@ -42,12 +43,12 @@ class InterceptHandler(logging.Handler):
     def emit(self, record: logging.LogRecord) -> None:
         # Get corresponding Loguru level if it exists
         try:
-            level: Union[str, int] = logger.level(record.levelname).name
+            level: str | int = logger.level(record.levelname).name
         except ValueError:
             level = record.levelno
 
         # Find caller from where originated the logged message
-        frame: Union[None, types.FrameType] = logging.currentframe()
+        frame: None | types.FrameType = logging.currentframe()
         depth = 2
         while frame and frame.f_code.co_filename == logging.__file__:
             frame = frame.f_back

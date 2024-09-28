@@ -1,4 +1,7 @@
+"""Heler functions for Jinja2 templates."""
+
 import datetime
+
 import zoneinfo
 
 from trafikkmeldinger.classes import Status
@@ -15,7 +18,7 @@ def timestamp_to_str(
     match date_diff.days:
         case 0:
             days_ago = ""
-        case -1:  # noqa: E225
+        case -1:
             days_ago = "I går "
         case _:
             days_ago = f"{-date_diff.days} dager siden "
@@ -24,9 +27,10 @@ def timestamp_to_str(
 
 
 def status_to_class(status: Status) -> str:
+    """Map status to CSS class."""
     mapping = {
-        Status.NEW: "list-group-item-danger",
-        Status.FIXING: "list-group-item-warning",
-        Status.DONE: "list-group-item-success",
+        Status.NEW: "list-group-item list-group-item-danger",
+        Status.FIXING: "list-group-item list-group-item-warning",
+        Status.DONE: "list-group-item list-group-item-success",
     }
     return mapping[status]

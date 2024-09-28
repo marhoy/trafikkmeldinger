@@ -1,21 +1,27 @@
+"""Web server for displaying traffic messages."""
+
 import datetime
-import importlib.resources
+from importlib.resources import as_file, files
 
 from fastapi import FastAPI, Query, Request, Response
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from loguru import logger
 from pydantic import BaseModel
+from zoneinfo import ZoneInfo
 
 from trafikkmeldinger import jinja_filters
+from trafikkmeldinger.politi_loggen import PoliceLog
 from trafikkmeldinger.twitter_data import get_tweet_conversations
 
 app = FastAPI()
 
-with importlib.resources.path("trafikkmeldinger", "static") as static_dir:
+with as_file(files("trafikkmeldinger").joinpath("static")) as static_dir:
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-with importlib.resources.path("trafikkmeldinger", "templates") as template_dir:
+with as_file(files("trafikkmeldinger").joinpath("templates")) as template_dir:
+    logger.warning(f"Template dir: {template_dir}")
     templates = Jinja2Templates(directory=template_dir)
 
 # Add custom Jinja filters
@@ -24,6 +30,8 @@ templates.env.filters["status_to_class"] = jinja_filters.status_to_class
 
 
 class TweetRequest(BaseModel):
+    """Incoming request model."""
+
     username: str = "VTSost"
     past_hours: int = 24
 
@@ -34,14 +42,17 @@ async def main(
     username: str = Query(default="VTSost", max_length=15),
     past_hours: int = Query(default=24, ge=1, le=48),
 ) -> Response:
-    conversations = get_tweet_conversations(username, past_hours)
-    last_tweet_timestamp = max(conv.updated_at for conv in conversations)
+    """Generate html page with messages."""
+    twitter_threads = get_tweet_conversations(username, past_hours)
+    police_threads = PoliceLog().get_threads()
+    threads = sorted(twitter_threads + police_threads, reverse=True)
+    last_message_timestamp = max(thread.updated_at for thread in threads)
     return templates.TemplateResponse(
         "index.html",
         {
             "request": request,
-            "updated_timestamp": datetime.datetime.now(),
-            "last_tweet_timestamp": last_tweet_timestamp,
-            "conversations": conversations,
+            "updated_timestamp": datetime.datetime.now(tz=ZoneInfo("Europe/Oslo")),
+            "last_message_timestamp": last_message_timestamp,
+            "threads": threads,
         },
     )

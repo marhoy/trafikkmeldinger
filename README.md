@@ -1,3 +1,1 @@
-testing
-gpg-test
-signing-test
+Testing...
