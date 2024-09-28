@@ -1,3 +1,5 @@
+"""Module for fetching and parsing data from the Datex II API."""
+
 import xml.etree.ElementTree as ET
 from datetime import UTC, datetime, timedelta
 from typing import Generator
@@ -10,15 +12,15 @@ from trafikkmeldinger.sqlmodels import Record, RecordBase, Situation, SituationB
 
 
 def get_situations_with_records() -> Generator[Situation, None, None]:
+    """Get situation data from the API and return a generator of Situation objects."""
     try:
-        root = ET.fromstring(get_situation_xml())
+        root = ET.fromstring(get_situation_xml())  # noqa: S314
     except (ConnectionError, ET.ParseError) as error:
         # If we can't connect to the server, or can't parse the data.
         logger.warning(f"Could not connect to the server or parse the data: {error}.")
         return
 
     for situation in root.iterfind(".//ns12:situation", namespaces=namespaces):
-
         # Get situation data
         situation_id = situation.get("id", default="")
         situation_version_time = datetime.fromisoformat(

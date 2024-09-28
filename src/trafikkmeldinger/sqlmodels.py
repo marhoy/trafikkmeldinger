@@ -1,5 +1,9 @@
+"""Contains the SQL models for the trafikkmeldinger database."""
+
+from __future__ import annotations
+
 from datetime import datetime, timezone
-from typing import ClassVar, Optional
+from typing import ClassVar
 
 from pydantic import AfterValidator
 from sqlalchemy import Label
@@ -33,7 +37,7 @@ class SituationBase(SQLModel):
     is_active: bool = True
 
 
-class Situation(SituationBase, table=True):  # type: ignore
+class Situation(SituationBase, table=True):
     """The situation table model."""
 
     def _num_records(self) -> int:
@@ -45,7 +49,7 @@ class Situation(SituationBase, table=True):  # type: ignore
             select(func.count()).where(Record.situation_id == cls.id).label("whatever")
         )
 
-    records: list["Record"] = Relationship(back_populates="situation")
+    records: list[Record] = Relationship(back_populates="situation")
     num_records: ClassVar[hybrid_property[int]] = hybrid_property(
         fget=_num_records, expr=_num_records_expression
     )
@@ -68,8 +72,8 @@ class RecordBase(SQLModel):
     )
 
 
-class Record(RecordBase, table=True):  # type: ignore
+class Record(RecordBase, table=True):
     """The record table model."""
 
-    pkey: Optional[int] = Field(default=None, primary_key=True)
+    pkey: int | None = Field(default=None, primary_key=True)
     situation: Situation = Relationship(back_populates="records")

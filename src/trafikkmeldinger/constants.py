@@ -1,3 +1,5 @@
+"""Configuration parameters for the trafikkmeldinger package."""
+
 import os
 from typing import cast
 

@@ -1,3 +1,5 @@
+"""Main module for running scheduled job."""
+
 import time
 
 import schedule

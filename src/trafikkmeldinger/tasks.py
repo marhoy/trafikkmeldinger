@@ -1,4 +1,8 @@
-from datetime import datetime, timedelta
+"""Tasks for updating the database with new data."""
+
+from __future__ import annotations
+
+import datetime
 
 from loguru import logger
 from sqlmodel import Integer, Session, cast, func, select
@@ -11,6 +15,7 @@ create_db_and_tables()
 
 
 def update_db_with_data() -> set[str]:
+    """Update the database with new data."""
     current_situation_ids: set[str] = set()
     num_updated_time, num_added_records, num_added_situations = 0, 0, 0
 
@@ -66,6 +71,7 @@ def update_db_with_data() -> set[str]:
 
 
 def mark_old_situations_inactive(current_situation_ids: set[str]) -> None:
+    """Mark all situations that are not in the current situation list as inactive."""
     with Session(engine) as session:
         counter = 0
         situations = session.exec(select(Situation).where(Situation.is_active))
@@ -82,12 +88,16 @@ def mark_old_situations_inactive(current_situation_ids: set[str]) -> None:
 
 
 def delete_old_situations() -> None:
+    """Delete all situations that are not active and older than 7 days."""
     with Session(engine) as session:
         # Find all situations that are not active
         old_situations = session.exec(
             select(Situation)
             .where(Situation.is_active == False)  # noqa: E712
-            .where(Situation.version_time < datetime.now() - timedelta(days=7))
+            .where(
+                Situation.version_time
+                < datetime.datetime.now(tz=datetime.UTC) - datetime.timedelta(days=7)
+            )
         ).all()
 
         # Delete all old situations
@@ -102,6 +112,7 @@ def delete_old_situations() -> None:
 
 
 def num_situations_and_records() -> tuple[int, int, int]:
+    """Get the number of inactive and active situations, and the number of records."""
     with Session(engine) as session:
         # Get the number of inactive and active situations
         results = session.exec(
@@ -122,6 +133,7 @@ def num_situations_and_records() -> tuple[int, int, int]:
 
 
 def scheduled_job() -> None:
+    """Update the database with new data."""
     num_inactive_situations, num_active_situations, num_records = (
         num_situations_and_records()
     )

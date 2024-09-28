@@ -1,5 +1,7 @@
 """Datex API Client."""
 
+from __future__ import annotations
+
 from urllib.parse import urljoin
 
 import requests
@@ -61,11 +63,11 @@ class DatexSession(requests_cache.CachedSession):
         return response
 
 
-def get_situation_xml(type: str | None = None) -> str:
+def get_situation_xml(situation_type: str | None = None) -> str:
     """Get situation XML-data."""
     with DatexSession() as session:
         path = "datexapi/GetSituation/pullsnapshotdata"
-        if type:
-            path += f"/filter/{type}"
+        if situation_type:
+            path += f"/filter/{situation_type}"
         response = session.get(path)
         return response.text
